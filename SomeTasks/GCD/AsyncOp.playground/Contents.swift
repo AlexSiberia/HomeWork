@@ -55,6 +55,9 @@ class AsyncOperation: Operation {
         /// Use a dispatch after to mimic the scenario of a long-running task.
         DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1), execute: {
             print("Executing")
+            var image1 = UIImageView()
+            let url = URL(string: "https://lgz.ru/upload/iblock/413/413c06c5f580aeaee2070d28dd823d27.jpg")
+            image1.load(url: url!)
             self.finish()
         })
     }
@@ -68,3 +71,18 @@ class AsyncOperation: Operation {
 let operation = AsyncOperation()
 queue.addOperations([operation], waitUntilFinished: true)
 print("Operations finished")
+
+extension UIImageView {
+    func load(url: URL) {
+        if let data = try? Data(contentsOf: url) {
+            if let image = UIImage(data: data) {
+                DispatchQueue.main.async {
+                    self.image = image
+                }
+            }
+        }
+    }
+}
+
+
+
