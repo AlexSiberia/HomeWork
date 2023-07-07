@@ -1,9 +1,17 @@
 import UIKit
+import PlaygroundSupport
 
 let queue = OperationQueue()
 
 class AsyncOperation: Operation {
-    private let lockQueue = DispatchQueue(label: "com.alexkurbatov", attributes: .concurrent)
+    
+    var result: UIImage? = nil
+    
+    private let lockQueue = DispatchQueue(
+        label: "com.alexkurbatov",
+        attributes: .concurrent
+    )
+    
     override var isAsynchronous: Bool {
         return true
     }
@@ -52,13 +60,27 @@ class AsyncOperation: Operation {
     }
     
     override func main() {
-        /// Use a dispatch after to mimic the scenario of a long-running task.
+
         DispatchQueue.global().asyncAfter(deadline: DispatchTime.now() + DispatchTimeInterval.seconds(1), execute: {
             print("Executing")
-            var image1 = UIImageView()
-            let url = URL(string: "https://lgz.ru/upload/iblock/413/413c06c5f580aeaee2070d28dd823d27.jpg")
-            image1.load(url: url!)
-            self.finish()
+            
+            defer {
+                self.finish()
+            }
+            
+            let url = URL(
+                string: "https://lgz.ru/upload/iblock/413/413c06c5f580aeaee2070d28dd823d27.jpg"
+            )
+            guard
+                let url,
+                let data = try? Data(contentsOf: url),
+                let image = UIImage(data: data)
+            else {
+                print("Error")
+                return
+            }
+            
+            self.result = image
         })
     }
     
@@ -71,18 +93,4 @@ class AsyncOperation: Operation {
 let operation = AsyncOperation()
 queue.addOperations([operation], waitUntilFinished: true)
 print("Operations finished")
-
-extension UIImageView {
-    func load(url: URL) {
-        if let data = try? Data(contentsOf: url) {
-            if let image = UIImage(data: data) {
-                DispatchQueue.main.async {
-                    self.image = image
-                }
-            }
-        }
-    }
-}
-
-
-
+PlaygroundPage.current.liveView = UIImageView.init(image: operation.result)
